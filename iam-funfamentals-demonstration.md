@@ -1,4 +1,3 @@
-````
 # Phase 1: Set Up IAM and Resources via the AWS Console
 
 ## Step 1: Create a Custom Least-Privilege Policy
