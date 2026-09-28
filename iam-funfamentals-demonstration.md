@@ -7,48 +7,48 @@
 - In the left navigation pane, choose **Policies → Create policy**.
 - Select the **JSON** tab and paste the following snippet to scope access to a specific S3 bucket and EC2 inspection actions:
 
-    ```json
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Sid": "AllowS3SpecificBucket",
-          "Effect": "Allow",
-          "Action": [
-            "s3:ListBucket",
-            "s3:GetObject",
-            "s3:PutObject"
-          ],
-          "Resource": [
-            "arn:aws:s3:::my-demo-bucket-2026",
-            "arn:aws:s3:::my-demo-bucket-2026/*"
-          ]
-        },
-        {
-          "Sid": "AllowEC2Describe",
-          "Effect": "Allow",
-          "Action": [
-            "ec2:DescribeInstances",
-            "ec2:DescribeSecurityGroups"
-          ],
-          "Resource": "*"
-        }
+      "Sid": "AllowS3SpecificBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-demo-bucket-2026",
+        "arn:aws:s3:::my-demo-bucket-2026/*"
       ]
+    },
+    {
+      "Sid": "AllowEC2Describe",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeSecurityGroups"
+      ],
+      "Resource": "*"
     }
-    ```
+  ]
+}
+````
 
-- Click **Next**, name the policy `DemoResourcePolicy`, and click **Create policy**.
+ - Click **Next**, name the policy `DemoResourcePolicy`, and click **Create policy**.
 
-## Step 2: Create a User Group and Attach the Policy
+ ## Step 2: Create a User Group and Attach the Policy
 
-- In the IAM sidebar, click **User groups → Create group**.
+ - In the IAM sidebar, click **User groups → Create group**.
 - Name the group `DemoCLI-Group`.
 - Under **Attach permissions policies**, search for and select `DemoResourcePolicy`.
 - Click **Create group**.
 
-## Step 3: Create the Demo User and Generate Access Keys
+ ## Step 3: Create the Demo User and Generate Access Keys
 
-- In the IAM sidebar, click **Users → Create user**.
+ - In the IAM sidebar, click **Users → Create user**.
 - Name the user `demo-cli-operator`.
 - Leave console access unchecked since this is a CLI-focused demo.
 - Click **Next**.
@@ -60,22 +60,22 @@
 - Select **Command Line Interface (CLI)**, acknowledge the recommendation, and click **Next**.
 - Complete the wizard and copy/download your **Access Key ID** and **Secret Access Key**.
 
-## Step 4: Create the Target S3 Bucket in the Console
+ ## Step 4: Create the Target S3 Bucket in the Console
 
-- Search for and open the **S3** service in the console.
+ - Search for and open the **S3** service in the console.
 - Click **Create bucket**.
 - Name it `my-demo-bucket-2026` (ensure it matches the bucket name defined in your IAM policy).
 - Keep **Block Public Access** enabled and click **Create bucket**.
 
-# Phase 2: Configure the Local AWS CLI Profile
+ # Phase 2: Configure the Local AWS CLI Profile
 
-Open your local terminal and map the credentials you just generated to a dedicated CLI profile:
+ Open your local terminal and map the credentials you just generated to a dedicated CLI profile:
 
-```bash
+```
 aws configure --profile demo-profile
-````
+```
 
- When prompted, enter:
+ Enter the following when prompted:
 
  - **AWS Access Key ID:** Paste your generated Access Key ID.
 - **AWS Secret Access Key:** Paste your generated Secret Access Key.
