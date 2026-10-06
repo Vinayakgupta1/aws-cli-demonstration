@@ -1,37 +1,30 @@
-# WEEK 2 — IAM & IDENTITY SECURITY: PRACTICAL AWS LABS
+ # WEEK 2 — IAM & IDENTITY SECURITY
 
- The following labs use **one continuous AWS environment** across Days 8–14. Students progressively create an IAM identity, assign permissions, test authorization, introduce excessive privileges, reduce them using least privilege, examine MFA and credentials, understand policy evaluation, and finally perform an IAM security assessment.
+ ## DAY 8 — IAM Fundamentals
 
- > **Lab safety:** Perform these exercises only in a dedicated training AWS account. Do not use the AWS root account for day-to-day work. The access key exercise is intentionally included for educational purposes; for real environments, prefer IAM roles, IAM Identity Center, and temporary credentials.
+ # Phase 1: Create the IAM Lab Resources via the AWS Console
 
----
+ ## Step 1: Create the S3 Bucket
 
- # DAY 8 — IAM FUNDAMENTALS
-
- ## Phase 1: Set Up IAM and Resources via the AWS Console
-
- ### Step 1: Create the S3 Bucket
-
- - Log in to the AWS Management Console using your administrator/training credentials and search for **S3**.
-- Choose **Create bucket**.
-- Enter the bucket name:
+ - Log in to the AWS Management Console using your administrator/training credentials.
+- Search for **S3**.
+- Click **Create bucket**.
+- Enter:
 
 ```
-week2-iam-lab-2026-<unique-name>
+week2-iam-lab-2026-vinayak
 ```
 
  - Keep **Block all public access** enabled.
 - Keep the remaining settings at their defaults.
 - Click **Create bucket**.
 
- > **Expected Result:** The S3 bucket is created and remains private.
-
 ---
 
- ### Step 2: Create an IAM Policy
+ ## Step 2: Create a Custom IAM Policy
 
  - Search for **IAM**.
-- In the left navigation pane, choose **Policies → Create policy**.
+- Choose **Policies → Create policy**.
 - Select the **JSON** tab.
 - Paste:
 
@@ -45,7 +38,7 @@ week2-iam-lab-2026-<unique-name>
       "Action": [
         "s3:ListBucket"
       ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>"
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak"
     },
     {
       "Sid": "AllowLabBucketObjectRead",
@@ -53,7 +46,7 @@ week2-iam-lab-2026-<unique-name>
       "Action": [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak/*"
     },
     {
       "Sid": "AllowEC2Inspection",
@@ -68,23 +61,21 @@ week2-iam-lab-2026-<unique-name>
 }
 ```
 
- - Replace `<unique-name>` with the actual bucket name.
+ - Replace `vinayak` with your actual bucket name.
 - Click **Next**.
 - Name the policy:
 
 ```
-Week2-Developer-ReadOnly
+Week2-Developer-Policy
 ```
 
  - Click **Create policy**.
 
- > **Security Concept:** Notice that `s3:ListBucket` uses the bucket ARN, while `s3:GetObject` uses the object ARN (`/*`). This demonstrates resource-level permissions.
-
 ---
 
- ### Step 3: Create the Developers Group
+ ## Step 3: Create an IAM Group
 
- - In the IAM sidebar, choose **User groups → Create group**.
+ - In IAM, choose **User groups → Create group**.
 - Enter:
 
 ```
@@ -94,14 +85,14 @@ Week2-Developers
  - Under **Attach permissions policies**, select:
 
 ```
-Week2-Developer-ReadOnly
+Week2-Developer-Policy
 ```
 
  - Click **Create group**.
 
 ---
 
- ### Step 4: Create the Developer User
+ ## Step 4: Create an IAM User
 
  - Choose **Users → Create user**.
 - Enter:
@@ -110,7 +101,7 @@ Week2-Developer-ReadOnly
 week2-developer
 ```
 
- - For this initial lab, leave console access disabled.
+ - For this lab, leave console access disabled.
 - Click **Next**.
 - Select **Add user to group**.
 - Select:
@@ -123,9 +114,9 @@ Week2-Developers
 
 ---
 
- ## Phase 2: Understand the IAM Architecture
+ ## Step 5: Verify the IAM Architecture
 
- The resulting architecture should look like:
+ The resulting structure should be:
 
 ```
 week2-developer
@@ -134,76 +125,29 @@ week2-developer
 Week2-Developers
        │
        ↓
-Week2-Developer-ReadOnly
+Week2-Developer-Policy
        │
-       ├── S3 Read
-       │
-       └── EC2 Describe
-```
-
- ### Identify Each Component
-
- | Component | Purpose |
-| --- | --- |
-| User | Represents an identity |
-| Group | Organizes users |
-| Policy | Defines permissions |
-| Permission | Allows/denies an AWS action |
-| Resource | AWS object being accessed |
-
----
-
- ## Phase 3: IAM Fundamentals Exercise
-
- Ask students to answer:
-
- 1. Who is the identity?
-2. What group does the identity belong to?
-3. What policy is attached?
-4. Which S3 actions are allowed?
-5. Which EC2 actions are allowed?
-6. Is the user allowed to terminate an EC2 instance?
-
- ### Expected Answers
-
-```
-Identity:
-week2-developer
-
-Group:
-Week2-Developers
-
-Policy:
-Week2-Developer-ReadOnly
-
-S3:
-ListBucket
-GetObject
-
-EC2:
-DescribeInstances
-DescribeSecurityGroups
-
-TerminateInstances:
-DENIED
+       ├── s3:ListBucket
+       ├── s3:GetObject
+       ├── ec2:DescribeInstances
+       └── ec2:DescribeSecurityGroups
 ```
 
 ---
 
- # DAY 9 — AUTHENTICATION VS AUTHORIZATION
+ # DAY 9 — Authentication vs Authorization
 
- ## Phase 1: Configure CLI Authentication
-
- For this controlled lab, create a dedicated CLI access key for `week2-developer`.
+ # Phase 1: Create CLI Credentials
 
  - Open **IAM → Users → week2-developer**.
 - Select **Security credentials**.
-- Under **Access keys**, choose **Create access key**.
+- Find **Access keys**.
+- Click **Create access key**.
 - Select **Command Line Interface (CLI)**.
 - Complete the wizard.
-- Copy the credentials temporarily to a secure location.
+- Securely copy the Access Key ID and Secret Access Key.
 
- > **Important:** The secret access key is displayed only when it is created. Never put it in GitHub, screenshots, chat messages, source code, or a public document.
+ > Use these credentials only for this isolated lab. Never place the secret key in source code, Git repositories, screenshots, or chat.
 
 ---
 
@@ -224,10 +168,15 @@ Default region name: us-east-1
 Default output format: json
 ```
 
- Verify authentication:
+---
+
+ # Phase 3: Demonstrate Authentication
+
+ Run:
 
 ```
-aws sts get-caller-identity --profile week2-developer
+aws sts get-caller-identity \
+--profile week2-developer
 ```
 
  ### Expected Output
@@ -240,124 +189,71 @@ aws sts get-caller-identity --profile week2-developer
 }
 ```
 
- ### Security Concept
-
  This demonstrates:
 
 ```
+Credentials
+    ↓
 Authentication
-      ↓
-"Who are you?"
-      ↓
-AWS identifies week2-developer
+    ↓
+AWS identifies the IAM user
 ```
 
 ---
 
- # Phase 3: Demonstrate Authorization
+ # Phase 4: Demonstrate Authorization
 
  Run:
 
 ```
-aws s3 ls s3://week2-iam-lab-2026-<unique-name> \
-  --profile week2-developer
+aws s3 ls \
+s3://week2-iam-lab-2026-vinayak \
+--profile week2-developer
 ```
 
  ### Expected Output
 
  Success.
 
- The bucket may be empty, so there may be no objects listed.
-
- Now try:
+ Now try an operation that isn't allowed:
 
 ```
 aws s3api delete-bucket \
-  --bucket week2-iam-lab-2026-<unique-name> \
-  --profile week2-developer
+--bucket week2-iam-lab-2026-vinayak \
+--profile week2-developer
 ```
 
  ### Expected Output
 
 ```
-An error occurred (AccessDenied) when calling the DeleteBucket operation
+AccessDenied
 ```
 
- This demonstrates:
+ The complete flow is:
 
 ```
 Authentication
       ↓
-"I am week2-developer"
-
+Who are you?
+      ↓
+week2-developer
+      ↓
 Authorization
       ↓
-"Can week2-developer delete this bucket?"
-
+What can you do?
       ↓
-
-NO
+IAM Policy
       ↓
-AccessDenied
+Allowed / Denied
 ```
 
 ---
 
- # DAY 10 — IAM POLICIES
+ # DAY 10 — IAM Policies
 
- ## Phase 1: Understand IAM Policy Anatomy
+ # Phase 1: Create an S3 Test File
 
- Create the following policy:
-
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowS3Read",
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
-    }
-  ]
-}
-```
-
- Explain:
-
-```
-Version
-   ↓
-Policy language version
-
-Statement
-   ↓
-Permission rule
-
-Effect
-   ↓
-Allow / Deny
-
-Action
-   ↓
-AWS API operation
-
-Resource
-   ↓
-Target AWS resource
-
-Condition
-   ↓
-Optional restrictions
-```
-
----
-
- # Phase 2: Test `Allow`
-
- Upload a file to the bucket using your administrator/training account:
+ Using your administrator/training credentials:
 
 ```
 echo "IAM Week 2 Test File" > test.txt
@@ -367,14 +263,18 @@ echo "IAM Week 2 Test File" > test.txt
 
 ```
 aws s3 cp test.txt \
-s3://week2-iam-lab-2026-<unique-name>/test.txt
+s3://week2-iam-lab-2026-vinayak/test.txt
 ```
 
- Now use the developer profile:
+---
+
+ # Phase 2: Test `s3:GetObject`
+
+ Using the developer profile:
 
 ```
 aws s3 cp \
-s3://week2-iam-lab-2026-<unique-name>/test.txt \
+s3://week2-iam-lab-2026-vinayak/test.txt \
 downloaded.txt \
 --profile week2-developer
 ```
@@ -382,18 +282,27 @@ downloaded.txt \
  ### Expected Output
 
 ```
-download: s3://.../test.txt to ./downloaded.txt
+download: s3://.../test.txt
+```
+
+ This demonstrates:
+
+```
+Effect = Allow
+Action = s3:GetObject
+Resource = specific bucket object
 ```
 
 ---
 
- # Phase 3: Test a Restricted Action
+ # Phase 3: Test an Unauthorized Action
 
- Try:
+ Run:
 
 ```
-aws s3 rm \
-s3://week2-iam-lab-2026-<unique-name>/test.txt \
+aws s3api delete-object \
+--bucket week2-iam-lab-2026-vinayak \
+--key test.txt \
 --profile week2-developer
 ```
 
@@ -403,58 +312,11 @@ s3://week2-iam-lab-2026-<unique-name>/test.txt \
 AccessDenied
 ```
 
- Students should understand:
-
-```
-s3:GetObject
-      ↓
-Explicit Allow
-      ↓
-SUCCESS
-
-s3:DeleteObject
-      ↓
-No Allow
-      ↓
-Implicit Deny
-```
-
 ---
 
- # Phase 4: Add EC2 Inspection Permissions
+ # Phase 4: Test EC2 Read Permissions
 
- Update the policy with:
-
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowS3Read",
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket",
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::week2-iam-lab-2026-<unique-name>",
-        "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
-      ]
-    },
-    {
-      "Sid": "AllowEC2Inspection",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "ec2:DescribeSecurityGroups"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
- Test:
+ Run:
 
 ```
 aws ec2 describe-instances \
@@ -464,7 +326,7 @@ aws ec2 describe-instances \
 
  ### Expected Output
 
- Success:
+ Success, for example:
 
 ```
 {
@@ -472,13 +334,13 @@ aws ec2 describe-instances \
 }
 ```
 
- or a JSON response containing existing EC2 instances.
+ or a list of existing instances.
 
- Now test:
+ Now test a write-level action using a fake instance ID:
 
 ```
 aws ec2 terminate-instances \
---instance-ids i-0123456789abcdef0 \
+--instance-ids i-00000000000000000 \
 --profile week2-developer \
 --region us-east-1
 ```
@@ -489,19 +351,15 @@ aws ec2 terminate-instances \
 AccessDenied
 ```
 
- > Use a fake/nonexistent instance ID for this test. Do not terminate a real training instance merely to demonstrate authorization failure.
-
 ---
 
  # DAY 11 — LEAST PRIVILEGE
 
- ## Phase 1: Create an Overprivileged Policy
+ # Phase 1: Create an Overprivileged Policy
 
- Create a deliberately excessive policy for the exercise.
-
- - IAM → Policies → Create policy.
+ - Open **IAM → Policies → Create policy**.
 - Select **JSON**.
-- Enter:
+- Paste:
 
 ```
 {
@@ -513,9 +371,7 @@ AccessDenied
       "Action": [
         "s3:*",
         "ec2:*",
-        "lambda:*",
-        "iam:ListUsers",
-        "iam:ListRoles"
+        "lambda:*"
       ],
       "Resource": "*"
     }
@@ -523,7 +379,21 @@ AccessDenied
 }
 ```
 
- Name it:
+ - Name it:
+
+```
+Week2-Developer-OverPrivileged
+```
+
+ - Click **Create policy**.
+
+---
+
+ # Phase 2: Attach the Excessive Policy
+
+ - Open **IAM → Users → week2-developer**.
+- Choose **Add permissions**.
+- Attach:
 
 ```
 Week2-Developer-OverPrivileged
@@ -531,39 +401,9 @@ Week2-Developer-OverPrivileged
 
 ---
 
- # Phase 2: Attach the Overprivileged Policy
+ # Phase 3: Demonstrate Excessive Access
 
- Attach it to:
-
-```
-week2-developer
-```
-
- or to a dedicated group:
-
-```
-Week2-OverPrivileged-Developers
-```
-
- The resulting architecture is:
-
-```
-Developer
-    ↓
-S3 *
-EC2 *
-Lambda *
-```
-
- Ask:
-
- > Does the developer really need all of these permissions?
-
----
-
- # Phase 3: Demonstrate Excessive Permissions
-
- Test:
+ Run:
 
 ```
 aws s3api list-buckets \
@@ -586,11 +426,11 @@ aws lambda list-functions \
 --region us-east-1
 ```
 
- All may succeed because the identity has excessive permissions.
+ The identity now has considerably more access than the developer requires.
 
 ---
 
- # Phase 4: Reduce Permissions
+ # Phase 4: Remove Excessive Permissions
 
  Remove:
 
@@ -600,60 +440,114 @@ ec2:*
 lambda:*
 ```
 
- Replace them with the actual business requirement:
+ Restore the limited policy:
 
 ```
-S3:
-- s3:ListBucket
-- s3:GetObject
-- s3:PutObject
-
-EC2:
-- ec2:DescribeInstances
-- ec2:DescribeSecurityGroups
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ReadWrite",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak"
+    },
+    {
+      "Sid": "S3ObjectReadWrite",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak/*"
+    },
+    {
+      "Sid": "EC2Inspection",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeSecurityGroups"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
 ```
 
- The final architecture becomes:
+---
+
+ # Phase 5: Verify Least Privilege
+
+ Allowed:
 
 ```
-Developer
-    │
-    ├── S3: Limited access
-    │
-    └── EC2: Read/inspection access
+aws s3 ls \
+s3://week2-iam-lab-2026-vinayak \
+--profile week2-developer
 ```
 
- ### Security Principle
+ Expected:
 
 ```
-More permissions
-       ↓
-Larger attack surface
-       ↓
-Greater impact if credentials are compromised
+SUCCESS
+```
 
-Least privilege
-       ↓
-Smaller attack surface
-       ↓
-Reduced potential impact
+ Allowed:
+
+```
+aws ec2 describe-instances \
+--profile week2-developer \
+--region us-east-1
+```
+
+ Expected:
+
+```
+SUCCESS
+```
+
+ Blocked:
+
+```
+aws s3api delete-bucket \
+--bucket week2-iam-lab-2026-vinayak \
+--profile week2-developer
+```
+
+ Expected:
+
+```
+AccessDenied
 ```
 
 ---
 
  # DAY 12 — MFA, ACCESS KEYS & TEMPORARY CREDENTIALS
 
- ## Phase 1: Understand Access Keys
+ # Phase 1: Inspect Access Keys
 
- The developer's programmatic identity is represented by:
+ - Open **IAM → Users → week2-developer**.
+- Select **Security credentials**.
+- Locate **Access keys**.
+- Verify the access key exists.
+
+ The architecture is:
 
 ```
 Access Key ID
        +
 Secret Access Key
        ↓
-AWS API Authentication
+AWS CLI
+       ↓
+AWS API
 ```
+
+---
+
+ # Phase 2: Demonstrate Credential Authentication
 
  Run:
 
@@ -662,135 +556,96 @@ aws sts get-caller-identity \
 --profile week2-developer
 ```
 
- Explain that AWS is using the configured credentials to authenticate the request.
+ Expected:
+
+```
+{
+    "Arn": "arn:aws:iam::<ACCOUNT-ID>:user/week2-developer"
+}
+```
 
 ---
 
- # Phase 2: Demonstrate Credential Exposure Risk
+ # Phase 3: Configure MFA
 
- Create a demonstration file:
-
-```
-echo "AWS_SECRET_ACCESS_KEY=DEMO_SECRET" > exposed-demo.txt
-```
-
- Explain:
-
-```
-Developer laptop
-      ↓
-Credential stored insecurely
-      ↓
-Malware / accidental upload / Git leak
-      ↓
-Credential exposure
-      ↓
-Unauthorized AWS access
-```
-
- Do **not** use or publish a real secret.
-
----
-
- # Phase 3: MFA
-
- For a human console identity:
+ For the appropriate console-enabled training identity:
 
  - Open **IAM → Users**.
-- Select the appropriate training user.
+- Select the user.
 - Choose **Security credentials**.
 - Locate **Multi-factor authentication (MFA)**.
-- Choose **Assign MFA device**.
-- Follow the wizard using an appropriate authenticator device.
+- Click **Assign MFA device**.
+- Choose an appropriate authenticator method.
+- Complete the MFA setup.
 
- Explain:
+ The authentication flow becomes:
 
 ```
 Password
    +
 MFA
    ↓
-Stronger authentication
+Authentication
 ```
-
- ### Discussion
-
- Ask students:
-
- > If an attacker steals only the password, what additional barrier does MFA provide?
-
- Then explain that MFA is an authentication control; it doesn't replace authorization.
 
 ---
 
- # Phase 4: Temporary Credentials with IAM Roles
+ # Phase 4: Create an IAM Role for EC2
 
- Create an IAM role:
+ - Open **IAM → Roles → Create role**.
+- Select **AWS service**.
+- Select **EC2**.
+- Attach the limited EC2 inspection policy.
+- Name the role:
 
 ```
 Week2-EC2-DeveloperRole
 ```
 
- Give the role only the required read permissions.
-
  The architecture becomes:
 
 ```
-EC2 Instance
-      │
-      ↓
+EC2
+ │
+ ↓
 IAM Role
-      │
-      ↓
+ │
+ ↓
 Temporary Credentials
-      │
-      ↓
-AWS Services
+ │
+ ↓
+AWS API
 ```
 
- Compare this with:
+ Instead of:
 
 ```
-EC2 Instance
-      │
-      ↓
+EC2
+ │
+ ↓
 Hard-coded Access Key
-      │
-      ↓
-AWS Services
-```
-
- ### Security Conclusion
-
-```
-Long-lived credentials
-        ↓
-Higher exposure risk
-
-Temporary credentials
-        ↓
-Automatic expiration
-        ↓
-Reduced credential lifetime
+ │
+ ↓
+AWS API
 ```
 
 ---
 
  # DAY 13 — IAM POLICY EVALUATION
 
- ## Phase 1: Demonstrate Explicit Allow
+ # Phase 1: Demonstrate Explicit Allow
 
- Create:
+ Use:
 
 ```
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "AllowRead",
+      "Sid": "AllowS3Read",
       "Effect": "Allow",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak/*"
     }
   ]
 }
@@ -800,7 +655,7 @@ Reduced credential lifetime
 
 ```
 aws s3 cp \
-s3://week2-iam-lab-2026-<unique-name>/test.txt \
+s3://week2-iam-lab-2026-vinayak/test.txt \
 test-download.txt \
 --profile week2-developer
 ```
@@ -815,11 +670,11 @@ SUCCESS
 
  # Phase 2: Demonstrate Implicit Deny
 
- Try:
+ Run:
 
 ```
 aws s3api delete-object \
---bucket week2-iam-lab-2026-<unique-name> \
+--bucket week2-iam-lab-2026-vinayak \
 --key test.txt \
 --profile week2-developer
 ```
@@ -830,14 +685,14 @@ aws s3api delete-object \
 AccessDenied
 ```
 
- Explain:
+ Because there is no applicable Allow for `s3:DeleteObject`.
 
 ```
-Is there an Allow?
-       ↓
-NO
-       ↓
+No Allow
+   ↓
 Implicit Deny
+   ↓
+AccessDenied
 ```
 
 ---
@@ -855,309 +710,67 @@ Implicit Deny
       "Effect": "Allow",
       "Action": "s3:*",
       "Resource": [
-        "arn:aws:s3:::week2-iam-lab-2026-<unique-name>",
-        "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
+        "arn:aws:s3:::week2-iam-lab-2026-vinayak",
+        "arn:aws:s3:::week2-iam-lab-2026-vinayak/*"
       ]
     },
     {
-      "Sid": "ExplicitlyDenyDelete",
+      "Sid": "DenyDelete",
       "Effect": "Deny",
-      "Action": [
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
+      "Action": "s3:DeleteObject",
+      "Resource": "arn:aws:s3:::week2-iam-lab-2026-vinayak/*"
     }
   ]
 }
 ```
 
- Now:
-
-```
-Allow:
-s3:*
-
-        +
-
-Deny:
-s3:DeleteObject
-
-        ↓
-
-s3:DeleteObject = DENIED
-```
-
- This demonstrates the fundamental IAM rule:
-
- > **An explicit Deny overrides an Allow.**
-
----
-
- # Phase 4: Build the IAM Policy Evaluation Flowchart
-
- Students should create this flowchart in their PPT:
-
-```
-                AWS Request
-                     │
-                     ↓
-              Authentication
-                     │
-                     ↓
-              Policy Evaluation
-                     │
-                     ↓
-             Explicit Deny?
-               /          \
-             YES            NO
-              │              │
-              ↓              ↓
-            DENY         Is there an
-                         applicable Allow?
-                          /          \
-                        YES           NO
-                         │             │
-                         ↓             ↓
-                       ALLOW        DENY
-                                  (Implicit)
-```
-
----
-
- # DAY 14 — IAM SECURITY CHALLENGE
-
- # Phase 1: Create the Intentionally Insecure Environment
-
- Create an IAM policy:
-
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "IntentionallyOverPrivileged",
-      "Effect": "Allow",
-      "Action": [
-        "s3:*",
-        "ec2:*",
-        "lambda:*",
-        "iam:ListUsers",
-        "iam:ListRoles"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
- Name it:
-
-```
-Week2-Security-Challenge-OverPrivileged
-```
-
- Attach it to:
-
-```
-week2-developer
-```
-
----
-
- # Phase 2: Student Challenge
-
- Give students the following scenario:
-
- > **You are the security analyst responsible for reviewing the `week2-developer` IAM identity. The identity was created by a developer and appears to have excessive permissions. Your job is to identify the security problems, determine the risk, reduce the permissions, and document your findings.**
-
----
-
- # Phase 3: Identify Current Permissions
-
- Students inspect:
-
- **IAM → Users → week2-developer → Permissions**
-
- They should document:
-
-```
-Identity:
-week2-developer
-
-Attached policies:
-____________________
-
-S3 permissions:
-____________________
-
-EC2 permissions:
-____________________
-
-Lambda permissions:
-____________________
-
-IAM permissions:
-____________________
-```
-
----
-
- # Phase 4: Identify Excessive Permissions
-
- Students create a table:
-
- | Permission | Required? | Risk | Recommendation |
-| --- | --- | --- | --- |
-| `s3:GetObject` | Yes | Low | Keep |
-| `s3:ListBucket` | Yes | Low | Keep |
-| `s3:DeleteObject` | No | High | Remove |
-| `s3:*` | No | Critical | Remove |
-| `ec2:DescribeInstances` | Yes | Low | Keep |
-| `ec2:TerminateInstances` | No | High | Remove |
-| `ec2:*` | No | Critical | Remove |
-| `lambda:*` | No | High | Remove |
-
----
-
- # Phase 5: Build the Least-Privilege Replacement
-
- Students create:
-
-```
-Week2-Developer-Final
-```
-
- with:
-
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "DeveloperS3Access",
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>"
-    },
-    {
-      "Sid": "DeveloperS3ObjectAccess",
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "arn:aws:s3:::week2-iam-lab-2026-<unique-name>/*"
-    },
-    {
-      "Sid": "DeveloperEC2Inspection",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "ec2:DescribeSecurityGroups"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
- Replace `<unique-name>` with the actual bucket name.
-
----
-
- # Phase 6: Validate the Remediation
-
- ## Test 1 — S3 Read
-
-```
-aws s3 ls \
-s3://week2-iam-lab-2026-<unique-name> \
---profile week2-developer
-```
-
- Expected:
-
-```
-SUCCESS
-```
-
----
-
- ## Test 2 — S3 Upload
-
-```
-echo "Least privilege test" > least-privilege.txt
-```
-
- Then:
-
-```
-aws s3 cp \
-least-privilege.txt \
-s3://week2-iam-lab-2026-<unique-name>/least-privilege.txt \
---profile week2-developer
-```
-
- Expected:
-
-```
-upload: ./least-privilege.txt
-```
-
----
-
- ## Test 3 — S3 Delete
+ Test:
 
 ```
 aws s3api delete-object \
---bucket week2-iam-lab-2026-<unique-name> \
---key least-privilege.txt \
+--bucket week2-iam-lab-2026-vinayak \
+--key test.txt \
 --profile week2-developer
 ```
 
- Expected:
+ Even though:
 
 ```
-AccessDenied
+s3:*
 ```
 
----
-
- ## Test 4 — EC2 Inspection
+ allows the action, the explicit Deny wins:
 
 ```
-aws ec2 describe-instances \
---profile week2-developer \
---region us-east-1
-```
-
- Expected:
-
-```
-SUCCESS
+Allow s3:*
+      +
+Deny s3:DeleteObject
+      ↓
+DENY
 ```
 
 ---
 
- ## Test 5 — EC2 Modification
+ # Phase 4: Demonstrate the Policy Evaluation Flow
 
- Use a nonexistent/fake instance ID:
-
-```
-aws ec2 terminate-instances \
---instance-ids i-00000000000000000 \
---profile week2-developer \
---region us-east-1
-```
-
- Expected:
+ Use this flow while explaining the result:
 
 ```
-AccessDenied
+AWS Request
+     ↓
+Authentication
+     ↓
+Policy Evaluation
+     ↓
+Explicit Deny?
+   /       \
+ YES       NO
+  ↓         ↓
+DENY    Applicable Allow?
+            /       \
+          YES        NO
+           ↓          ↓
+         ALLOW     IMPLICIT DENY
 ```
 
 ---
-
- **"Can I access AWS?" → "Who am I?" → "What can I do?" → "Why can I do it?" → "Do I have too much access?" → "How do I reduce it?" → "Can I prove the identity is secure?"**
